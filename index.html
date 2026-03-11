@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="金陵劫 - AI驱动的武侠文字冒险游戏">
+  <title>金陵劫</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+  <!-- ==================== 标题画面 ==================== -->
+  <div id="title-screen">
+    <div class="title-main">金陵劫</div>
+    <div class="title-sub">AI驱动 · 武侠文字冒险</div>
+    <div class="title-btns">
+      <button class="title-btn" id="btn-start" type="button" onclick="GameEngine.startGame()">开始新游戏</button>
+      <button class="title-btn secondary" id="btn-continue" onclick="GameEngine.continueGame()" style="display:none">继续游戏</button>
+      <button class="title-btn secondary" onclick="UI.toggleSettings()">设置</button>
+    </div>
+  </div>
+
+  <!-- ==================== 游戏主界面 ==================== -->
+  <div id="game-screen" class="hidden">
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <button class="toolbar-btn" onclick="UI.toggleSettings()" title="设置">⚙️</button>
+      <button class="toolbar-btn" onclick="UI.toggleSynopsis()" title="故事梗概">📜</button>
+      <span class="toolbar-spacer"></span>
+      <span class="toolbar-title">金 陵 劫</span>
+      <span class="toolbar-spacer"></span>
+      <button class="toolbar-btn" onclick="GameEngine.saveGame();alert('已保存')" title="保存">💾</button>
+    </div>
+
+    <!-- 角色状态面板 -->
+    <div id="char-panel"></div>
+
+    <!-- 故事区域 -->
+    <div id="story-area"></div>
+
+    <!-- 选择面板 -->
+    <div id="choice-panel" class="hidden"></div>
+  </div>
+
+  <!-- ==================== 覆盖层 ==================== -->
+  <div id="dice-overlay" class="hidden"></div>
+  <div id="loading-overlay" class="hidden"></div>
+  <div id="chapter-overlay" class="hidden"></div>
+  <div id="tap-hint">点击继续 ▶</div>
+
+  <!-- ==================== 故事梗概面板 ==================== -->
+  <div id="synopsis-panel" class="hidden"></div>
+
+  <!-- ==================== 设置面板 ==================== -->
+  <div id="settings-panel" class="hidden">
+    <div class="settings-title">设 置</div>
+
+    <div class="settings-group">
+      <div class="settings-label">DeepSeek API Key</div>
+      <input type="password" class="settings-input" id="api-key-input"
+             placeholder="输入你的API Key" oninput="CONFIG.API_KEY=this.value;localStorage.setItem('ds_api_key',this.value)">
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-label">打字速度 (ms)</div>
+      <input type="range" min="10" max="100" value="40" class="settings-input"
+             oninput="CONFIG.TYPEWRITER_SPEED=parseInt(this.value)">
+    </div>
+
+    <div class="settings-group">
+      <button class="settings-btn" onclick="GameEngine.saveGame();alert('已保存')">💾 保存游戏</button>
+      <button class="settings-btn danger" onclick="if(confirm('确定要删除存档吗？'))GameEngine.clearSave()">🗑️ 删除存档</button>
+      <button class="settings-btn" onclick="UI.toggleSettings()">关闭设置</button>
+    </div>
+  </div>
+
+  <!-- ==================== 脚本加载 ==================== -->
+  <script src="js/config.js"></script>
+  <script src="js/dice.js"></script>
+  <script src="js/story.js"></script>
+  <script src="js/ai-agent.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    // ============================================================
+    // 初始化
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      UI.init();
+      GameEngine.init();
+
+      // 恢复API Key
+      const savedKey = localStorage.getItem('ds_api_key');
+      if (savedKey) {
+        CONFIG.API_KEY = savedKey;
+        document.getElementById('api-key-input').value = savedKey;
+      }
+
+      // 检查是否有存档
+      const hasSave = localStorage.getItem('jinlingjie_save');
+      if (hasSave) {
+        document.getElementById('btn-continue').style.display = 'block';
+      }
+
+      // 点击故事区域推进剧情
+      document.getElementById('story-area').addEventListener('click', function() {
+        if (!GameEngine.state.isTyping && !GameEngine.state.waitingForChoice && !GameEngine.state.aiGenerating) {
+          GameEngine.nextBeat();
+        }
+      });
+
+      // 注册Service Worker (PWA)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(function() {});
+      }
+    });
+  </script>
+
+</body>
+</html>
