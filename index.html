@@ -17,7 +17,8 @@
     <div class="title-sub">AI驱动 · 武侠文字冒险</div>
     <div class="title-btns">
       <button class="title-btn" id="btn-start" type="button" onclick="GameEngine.startGame()">开始新游戏</button>
-      <button class="title-btn secondary" id="btn-continue" onclick="GameEngine.continueGame()" style="display:none">继续游戏</button>
+      <button class="title-btn secondary" id="btn-continue" onclick="GameEngine.continueGame(0)" style="display:none">继续游戏</button>
+      <button class="title-btn secondary" onclick="UI.toggleSavePanel()">存档管理</button>
       <button class="title-btn secondary" onclick="UI.toggleSettings()">设置</button>
     </div>
   </div>
@@ -25,10 +26,11 @@
     <div class="toolbar">
       <button class="toolbar-btn" onclick="UI.toggleSettings()" title="设置">⚙️</button>
       <button class="toolbar-btn" onclick="UI.toggleSynopsis()" title="故事梗概">📜</button>
+      <button class="toolbar-btn" onclick="UI.toggleCharBook()" title="人物图鉴">👥</button>
+      <button class="toolbar-btn" onclick="UI.toggleSavePanel()" title="存档">💾</button>
       <span class="toolbar-spacer"></span>
       <span class="toolbar-title">金 陵 劫</span>
       <span class="toolbar-spacer"></span>
-      <button class="toolbar-btn" onclick="GameEngine.saveGame();alert('已保存')" title="保存">💾</button>
     </div>
     <div id="char-panel"></div>
     <div id="story-area"></div>
@@ -39,6 +41,8 @@
   <div id="chapter-overlay" class="hidden"></div>
   <div id="tap-hint">点击继续 ▶</div>
   <div id="synopsis-panel" class="hidden"></div>
+  <div id="save-panel" class="hidden"></div>
+  <div id="charbook-panel" class="hidden"></div>
   <div id="settings-panel" class="hidden">
     <div class="settings-title">设 置</div>
     <div class="settings-group">
@@ -50,8 +54,7 @@
       <input type="range" min="10" max="100" value="40" class="settings-input" oninput="CONFIG.TYPEWRITER_SPEED=parseInt(this.value)">
     </div>
     <div class="settings-group">
-      <button class="settings-btn" onclick="GameEngine.saveGame();alert('已保存')">💾 保存游戏</button>
-      <button class="settings-btn danger" onclick="if(confirm('确定要删除存档吗？'))GameEngine.clearSave()">🗑️ 删除存档</button>
+      <button class="settings-btn danger" onclick="if(confirm('确定删除所有存档？'))GameEngine.clearAllSaves()">🗑️ 删除所有存档</button>
       <button class="settings-btn" onclick="UI.toggleSettings()">关闭设置</button>
     </div>
   </div>
@@ -67,7 +70,10 @@
       UI.init(); GameEngine.init();
       var k = localStorage.getItem('ds_api_key');
       if (k) { CONFIG.API_KEY = k; document.getElementById('api-key-input').value = k; }
-      if (localStorage.getItem('jinlingjie_save')) document.getElementById('btn-continue').style.display = 'block';
+      // 检查是否有任何存档
+      var slots = GameEngine.getSaveSlots();
+      var hasAnySave = slots.some(function(s) { return s.exists; });
+      if (hasAnySave) document.getElementById('btn-continue').style.display = 'block';
       document.getElementById('story-area').addEventListener('click', function() {
         if (!GameEngine.state.isTyping && !GameEngine.state.waitingForChoice && !GameEngine.state.aiGenerating) GameEngine.nextBeat();
       });

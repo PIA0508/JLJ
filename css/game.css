@@ -440,3 +440,72 @@ html, body {
   font-style: italic;
   white-space: nowrap;
 }
+
+
+/* ============================================================
+   存档面板
+   ============================================================ */
+#save-panel {
+  position:fixed; inset:0; background:rgba(0,0,0,.92);
+  z-index:280; overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+#save-panel.hidden { display:none; }
+.save-slot {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.7rem .5rem; margin-bottom:.5rem;
+  background:var(--bg-card); border:1px solid var(--border); border-radius:8px;
+}
+.save-slot.empty { opacity:.5; }
+.save-slot-info { flex:1; min-width:0; }
+.save-slot-label { font-size:.85rem; color:var(--text-primary); font-weight:bold; }
+.save-slot-time { font-size:.7rem; color:var(--text-dim); margin-top:.1rem; }
+.save-slot-btns { display:flex; gap:.3rem; flex-shrink:0; }
+.save-slot-btn {
+  background:none; border:1px solid var(--border); color:var(--text-secondary);
+  padding:.3rem .5rem; font-size:.7rem; font-family:inherit; cursor:pointer; border-radius:4px;
+}
+.save-slot-btn:active { background:rgba(255,255,255,.05); }
+.save-slot-btn.load { border-color:var(--green); color:var(--green); }
+.save-slot-btn.save { border-color:var(--gold-dark); color:var(--gold); }
+.save-slot-btn.del { border-color:var(--red); color:var(--red); }
+
+/* ============================================================
+   人物图鉴
+   ============================================================ */
+#charbook-panel {
+  position:fixed; inset:0; background:rgba(0,0,0,.92);
+  z-index:280; overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+#charbook-panel.hidden { display:none; }
+.cb-body { padding:0 .5rem .8rem; }
+.cb-faction { margin-bottom:.8rem; }
+.cb-faction-name {
+  font-size:.8rem; font-weight:bold; letter-spacing:.15rem;
+  padding:.4rem 0; border-bottom:1px solid rgba(255,255,255,.06);
+}
+.cb-char {
+  display:flex; gap:.5rem; padding:.5rem .2rem;
+  border-bottom:1px solid rgba(255,255,255,.03);
+}
+.cb-avatar {
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.75rem; font-weight:bold; color:#000;
+}
+.cb-info { flex:1; min-width:0; }
+.cb-name { font-size:.85rem; font-weight:bold; }
+.cb-title { font-size:.7rem; color:var(--text-dim); }
+.cb-desc { font-size:.75rem; color:var(--text-secondary); line-height:1.4; margin-top:.15rem; }
+.cb-relations { padding:0 .2rem; }
+.cb-rel {
+  display:flex; align-items:center; gap:.4rem; flex-wrap:wrap;
+  padding:.35rem 0; border-bottom:1px solid rgba(255,255,255,.03);
+  font-size:.8rem;
+}
+.cb-rel-from { color:var(--text-primary); font-weight:bold; }
+.cb-rel-type {
+  font-size:.65rem; padding:.1rem .35rem; border:1px solid;
+  border-radius:3px; flex-shrink:0;
+}
+.cb-rel-to { color:var(--text-primary); font-weight:bold; }
+.cb-rel-desc { color:var(--text-dim); font-size:.7rem; width:100%; }

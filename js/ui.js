@@ -15,6 +15,8 @@ const UI = {
       chapterOverlay: document.getElementById('chapter-overlay'),
       settingsPanel: document.getElementById('settings-panel'),
       synopsisPanel: document.getElementById('synopsis-panel'),
+      savePanel: document.getElementById('save-panel'),
+      charBookPanel: document.getElementById('charbook-panel'),
       tapHint: document.getElementById('tap-hint')
     };
   },
@@ -374,7 +376,116 @@ const UI = {
     UI.els.settingsPanel.classList.toggle('hidden');
     if (!UI.els.settingsPanel.classList.contains('hidden')) {
       UI.els.synopsisPanel.classList.add('hidden');
+      if (UI.els.charBookPanel) UI.els.charBookPanel.classList.add('hidden');
+      if (UI.els.savePanel) UI.els.savePanel.classList.add('hidden');
     }
+  },
+
+  // ============================================================
+  // 多槽位存档面板
+  // ============================================================
+  toggleSavePanel() {
+    var panel = UI.els.savePanel;
+    if (panel.classList.contains('hidden')) {
+      UI._renderSavePanel();
+      panel.classList.remove('hidden');
+      UI.els.settingsPanel.classList.add('hidden');
+      UI.els.synopsisPanel.classList.add('hidden');
+      if (UI.els.charBookPanel) UI.els.charBookPanel.classList.add('hidden');
+    } else { panel.classList.add('hidden'); }
+  },
+
+  _renderSavePanel() {
+    var slots = GameEngine.getSaveSlots();
+    var html = '<div class="syn-header"><div class="syn-title">💾 存档管理</div><button class="syn-close" onclick="UI.toggleSavePanel()">✕</button></div>';
+    html += '<div style="padding:.6rem .8rem">';
+    for (var i = 0; i < slots.length; i++) {
+      var s = slots[i];
+      if (s.exists) {
+        html += '<div class="save-slot"><div class="save-slot-info"><div class="save-slot-label">存档 ' + (i + 1) + ' — ' + s.label + '</div><div class="save-slot-time">' + s.time + '</div></div>' +
+          '<div class="save-slot-btns"><button class="save-slot-btn load" onclick="UI.toggleSavePanel();GameEngine.continueGame(' + i + ')">读取</button>' +
+          '<button class="save-slot-btn save" onclick="GameEngine.saveGame(' + i + ');UI._renderSavePanel()">覆盖</button>' +
+          '<button class="save-slot-btn del" onclick="if(confirm(\'确定删除？\')){GameEngine.deleteSave(' + i + ');UI._renderSavePanel()}">删除</button></div></div>';
+      } else {
+        html += '<div class="save-slot empty"><div class="save-slot-info"><div class="save-slot-label">存档 ' + (i + 1) + ' — 空</div></div>' +
+          '<div class="save-slot-btns"><button class="save-slot-btn save" onclick="GameEngine.saveGame(' + i + ');UI._renderSavePanel()">保存</button></div></div>';
+      }
+    }
+    html += '</div>';
+    UI.els.savePanel.innerHTML = html;
+  },
+
+  // ============================================================
+  // 人物图鉴 (出场角色 + 关系图)
+  // ============================================================
+  toggleCharBook() {
+    var panel = UI.els.charBookPanel;
+    if (panel.classList.contains('hidden')) {
+      UI._renderCharBook();
+      panel.classList.remove('hidden');
+      UI.els.settingsPanel.classList.add('hidden');
+      UI.els.synopsisPanel.classList.add('hidden');
+      if (UI.els.savePanel) UI.els.savePanel.classList.add('hidden');
+    } else { panel.classList.add('hidden'); }
+  },
+
+  _renderCharBook() {
+    var appeared = GameEngine.state.appearedChars;
+    var relations = GameEngine.state.relationships;
+    var factionColors = { '乐求汇': '#c9a96e', '常山宇文氏': '#a8d5a2', '金陵司马氏': '#d4726a', '丹阳慕容氏': '#7eb8da', '姑苏齐氏': '#d0a0d0' };
+
+    // 按势力分组
+    var groups = {};
+    for (var name in appeared) {
+      var c = appeared[name];
+      var f = c.faction || '其他';
+      if (!groups[f]) groups[f] = [];
+      groups[f].push(c);
+    }
+
+    var charHtml = '';
+    for (var faction in groups) {
+      var color = factionColors[faction] || '#9a9080';
+      charHtml += '<div class="cb-faction"><div class="cb-faction-name" style="color:' + color + '">' + faction + '</div>';
+      for (var i = 0; i < groups[faction].length; i++) {
+        var ch = groups[faction][i];
+        var mainChar = ch.id ? CHARACTERS[ch.id] : null;
+        var avatarBg = mainChar ? mainChar.color : color;
+        charHtml += '<div class="cb-char">' +
+          '<div class="cb-avatar" style="background:' + avatarBg + '">' + ch.name[0] + '</div>' +
+          '<div class="cb-info">' +
+          '<div class="cb-name" style="color:' + avatarBg + '">' + ch.name + '</div>' +
+          '<div class="cb-title">' + (ch.title || '') + '</div>' +
+          '<div class="cb-desc">' + (ch.desc || '') + '</div>' +
+          '</div></div>';
+      }
+      charHtml += '</div>';
+    }
+
+    // 关系图
+    var relHtml = '';
+    for (var j = 0; j < relations.length; j++) {
+      var r = relations[j];
+      // 只显示已出场角色的关系
+      if (appeared[r.from] || appeared[r.to]) {
+        var typeColors = { '兄弟': '#c9a96e', '结义': '#a8d5a2', '世仇': '#d4726a', '盟友': '#7eb8da', '族亲': '#d0a0d0', '族人': '#9a9080' };
+        var tc = typeColors[r.type] || '#9a9080';
+        relHtml += '<div class="cb-rel">' +
+          '<span class="cb-rel-from">' + r.from + '</span>' +
+          '<span class="cb-rel-type" style="color:' + tc + ';border-color:' + tc + '">' + r.type + '</span>' +
+          '<span class="cb-rel-to">' + r.to + '</span>' +
+          '<span class="cb-rel-desc">' + (r.desc || '') + '</span></div>';
+      }
+    }
+
+    var noChars = Object.keys(appeared).length === 0;
+    UI.els.charBookPanel.innerHTML =
+      '<div class="syn-header"><div class="syn-title">👥 人物图鉴</div><button class="syn-close" onclick="UI.toggleCharBook()">✕</button></div>' +
+      '<div class="cb-body">' +
+      (noChars ? '<div class="syn-empty">尚无角色出场，开始游戏后将自动记录。</div>' :
+        '<div class="syn-section-title">出场人物</div>' + charHtml +
+        '<div class="syn-section-title">人物关系</div><div class="cb-relations">' + relHtml + '</div>') +
+      '</div>';
   },
 
   // ============================================================
